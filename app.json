@@ -25,7 +25,8 @@
     },
     "plugins": [
       "expo-system-ui",
-      "./plugins/withNitroBuildFix"
+      "./plugins/withNitroBuildFix",
+      "./plugins/withReactCorePrebuiltFix"
     ]
   }
 }

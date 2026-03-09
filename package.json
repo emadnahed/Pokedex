@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
+    "postinstall": "node scripts/patch-ios-unicode.js",
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
@@ -15,7 +16,7 @@
     "clean:ios": "rm -rf ios && rm -rf ~/Library/Developer/Xcode/DerivedData/*",
     "clean:android": "rm -rf android",
     "fresh-install": "npm run clean && npm install",
-    "setup:ios": "npm run clean:ios && npm install && npx expo prebuild --clean --platform ios",
+    "setup:ios": "npm run clean:ios && npm install && npx expo prebuild --clean --platform ios --no-install && cd ios && BUNDLE_GEMFILE=../Gemfile bundle install && BUNDLE_GEMFILE=../Gemfile bundle exec pod install --repo-update",
     "setup:ios:device": "npm run setup:ios && npx expo run:ios --device",
     "setup:android": "npm run clean:android && npm install && npx expo prebuild --clean --platform android && rm -rf node_modules/react-native-mmkv/android/.cxx && cd android && ./gradlew clean && ./gradlew :react-native-nitro-modules:externalNativeBuildDebug -PreactNativeArchitectures=x86_64,arm64-v8a && cd ..",
     "setup:android:device": "npm run setup:android && npx expo run:android --device",
