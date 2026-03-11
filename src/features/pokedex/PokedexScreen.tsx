@@ -174,9 +174,20 @@ export function PokedexScreen({ navigation }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: '#1C1410' }]}>
       <View style={styles.homeHeader}>
-        <Text style={styles.wordmark} numberOfLines={1} adjustsFontSizeToFit>
-          POKÉ<Text style={styles.wordmarkOutline}>DEX</Text>
-        </Text>
+        {showFavorites ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <TouchableOpacity onPress={() => setShowFavorites(false)}>
+              <Ionicons name="arrow-back" size={24} color="#F0EBE3" />
+            </TouchableOpacity>
+            <Text style={styles.wordmark} numberOfLines={1} adjustsFontSizeToFit>
+              FAVOR<Text style={styles.wordmarkOutline}>ITES</Text>
+            </Text>
+          </View>
+        ) : (
+          <Text style={styles.wordmark} numberOfLines={1} adjustsFontSizeToFit>
+            POKÉ<Text style={styles.wordmarkOutline}>DEX</Text>
+          </Text>
+        )}
         <View style={styles.hdrRight}>
           <TouchableOpacity style={styles.iconPill}>
             <Ionicons name="notifications-outline" size={18} color="#F0EBE3" />
