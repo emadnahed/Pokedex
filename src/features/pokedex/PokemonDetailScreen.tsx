@@ -178,7 +178,6 @@ export function PokemonDetailScreen({ route, navigation }: Props) {
                   key={s.stat.name}
                   statName={s.stat.name}
                   value={s.base_stat}
-                  primaryType={primaryType}
                 />
               ))}
             </View>

@@ -17,7 +17,7 @@ interface Props {
 }
 
 const GLOSSARY_TERMS = [
-    { key: 'HP', desc: 'Hit Points. The amount of damage a Pokémon can take before fending.' },
+    { key: 'HP', desc: 'Hit Points. The amount of damage a Pokémon can take before fainting.' },
     { key: 'ATK', desc: 'Attack. Determines how much damage a Pokémon deals with physical moves.' },
     { key: 'DEF', desc: 'Defense. Determines how much damage a Pokémon takes from physical moves.' },
     { key: 'SP.A', desc: 'Special Attack. Determines damage dealt by special moves (like Surf or Flamethrower).' },

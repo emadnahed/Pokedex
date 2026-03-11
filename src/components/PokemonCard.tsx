@@ -58,7 +58,7 @@ function PokemonCardComponent({ pokemon, onPress }: Props) {
       </View>
       <View style={styles.gcardBody}>
         <Text style={[styles.gcardNum, { color: colors.textMuted }]}>
-          #{formatPokemonId(pokemon.id)}
+          {formatPokemonId(pokemon.id)}
         </Text>
         <Text style={[styles.gcardName, { color: colors.text }]} numberOfLines={1}>
           {formatPokemonName(pokemon.name)}
