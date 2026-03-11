@@ -12,7 +12,6 @@ import { getStatMax } from '@/utils/pokemonHelpers';
 interface Props {
   statName: string;
   value: number;
-  primaryType: string;
 }
 
 const STATS_UI: Record<string, { l: string, c: string }> = {

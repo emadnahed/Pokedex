@@ -28,7 +28,7 @@ import { pokemonService } from '@/api/pokemonService';
 import type { PokedexStackParamList } from '@/navigation/PokedexNavigator';
 import { formatPokemonId, formatPokemonName, getSpriteUrl } from '@/utils/pokemonHelpers';
 import { getTypeData } from '@/utils/typeColors';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 type Props = NativeStackScreenProps<PokedexStackParamList, 'Pokedex'>;
 

@@ -59,8 +59,16 @@
   },
   "jest": {
     "preset": "jest-expo",
+    "setupFiles": ["./jest.setup.js"],
+    "moduleNameMapper": {
+      "^react-native-mmkv$": "<rootDir>/__mocks__/react-native-mmkv.js",
+      "^react-native-reanimated$": "<rootDir>/__mocks__/react-native-reanimated.js",
+      "^react-native-reanimated/.*$": "<rootDir>/__mocks__/react-native-reanimated.js",
+      "^@expo/vector-icons$": "<rootDir>/__mocks__/@expo/vector-icons.js",
+      "^@expo/vector-icons/.*$": "<rootDir>/__mocks__/@expo/vector-icons.js"
+    },
     "transformIgnorePatterns": [
-      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*|react-native-mmkv|@reduxjs)"
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*|react-native-mmkv|@reduxjs|react-redux|immer)"
     ]
   }
 }
