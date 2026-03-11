@@ -41,14 +41,14 @@ export function GlossarySheet({ visible, onClose }: Props) {
             <TouchableWithoutFeedback onPress={onClose}>
                 <View style={styles.backdrop}>
                     <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-                        <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+                        <View testID="glossary-sheet" style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
                             {/* Header */}
                             <View style={styles.header}>
                                 <View>
                                     <Text style={styles.title}>Glossary</Text>
                                     <Text style={styles.subtitle}>Terms & Abbreviations Guide</Text>
                                 </View>
-                                <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                                <TouchableOpacity testID="glossary-close" onPress={onClose} style={styles.closeBtn}>
                                     <Ionicons name="close" size={24} color="#F0EBE3" />
                                 </TouchableOpacity>
                             </View>

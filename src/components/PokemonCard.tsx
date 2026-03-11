@@ -42,6 +42,7 @@ function PokemonCardComponent({ pokemon, onPress }: Props) {
 
   return (
     <AnimatedPressable
+      testID={`pokemon-card-${pokemon.id}`}
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}

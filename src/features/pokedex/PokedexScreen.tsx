@@ -104,6 +104,7 @@ export function PokedexScreen({ navigation }: Props) {
       <Animated.View style={styles.spotlightWrap} entering={FadeInDown.duration(600).springify()}>
         {spotlightItem && (
           <AnimatedPressable
+            testID="spotlight-card"
             style={[styles.spotlight, { backgroundColor: typeData.bg }]}
             onPress={() => handlePress(spotlightItem.id)}
           >
@@ -146,6 +147,7 @@ export function PokedexScreen({ navigation }: Props) {
           <View style={styles.secRight}>
             <Text style={styles.secCount}>{displayData.length} Pokémon</Text>
             <TouchableOpacity
+              testID="favorites-toggle"
               style={[styles.favToggleBtn, showFavorites && styles.favToggleBtnActive]}
               onPress={() => setShowFavorites(!showFavorites)}
             >
@@ -207,7 +209,7 @@ export function PokedexScreen({ navigation }: Props) {
             <Ionicons name="search-outline" size={48} color="rgba(255,255,255,0.1)" style={{ marginBottom: 16 }} />
             <Text style={styles.emptyText}>No Pokémon found matching your filters.</Text>
             {showFavorites && (
-              <TouchableOpacity style={styles.emptyBackBtn} onPress={() => setShowFavorites(false)}>
+              <TouchableOpacity testID="back-to-all-btn" style={styles.emptyBackBtn} onPress={() => setShowFavorites(false)}>
                 <Ionicons name="arrow-back" size={16} color="#1C1410" />
                 <Text style={styles.emptyBackText}>Back to All</Text>
               </TouchableOpacity>

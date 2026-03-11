@@ -120,3 +120,5 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+# Detox E2E artifacts (videos, screenshots, logs)
+e2e/artifacts/

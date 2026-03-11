@@ -41,6 +41,7 @@ export const SearchBar = memo(({ value, onChangeText }: Props) => {
           style={styles.icon}
         />
         <TextInput
+          testID="search-input"
           style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]}
           value={value}
           onChangeText={onChangeText}

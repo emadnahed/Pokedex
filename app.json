@@ -26,7 +26,8 @@
     "plugins": [
       "expo-system-ui",
       "./plugins/withNitroBuildFix",
-      "./plugins/withReactCorePrebuiltFix"
+      "./plugins/withReactCorePrebuiltFix",
+      "@config-plugins/detox"
     ]
   }
 }

@@ -97,14 +97,14 @@ export function PokemonDetailScreen({ route, navigation }: Props) {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* STICKY HEADER ACTIONS */}
       <View style={[styles.dTopbar, { top: Math.max(insets.top, 16) + (Platform.OS === 'android' ? 22 : 0) }]}>
-        <TouchableOpacity style={styles.dBtn} onPress={() => navigation.goBack()}>
+        <TouchableOpacity testID="back-button" style={styles.dBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={20} color="rgba(255,255,255,0.85)" />
         </TouchableOpacity>
         <View style={styles.topRBtns}>
-          <TouchableOpacity style={styles.dBtn} onPress={() => setIsGlossaryVisible(true)}>
+          <TouchableOpacity testID="glossary-button" style={styles.dBtn} onPress={() => setIsGlossaryVisible(true)}>
             <Ionicons name="help" size={20} color="rgba(255,255,255,0.85)" />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.dBtn, isFavorite && styles.dBtnLit]} onPress={handleFavorite}>
+          <TouchableOpacity testID="favorite-button" style={[styles.dBtn, isFavorite && styles.dBtnLit]} onPress={handleFavorite}>
             <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={20} color={isFavorite ? "#fff" : "rgba(255,255,255,0.85)"} />
           </TouchableOpacity>
         </View>
@@ -185,6 +185,7 @@ export function PokemonDetailScreen({ route, navigation }: Props) {
 
           {/* EVO BANNER */}
           <TouchableOpacity
+            testID="evolution-banner"
             style={[styles.evoBanner, { backgroundColor: typeData.bg }]}
             onPress={handleEvolution}
             activeOpacity={0.8}

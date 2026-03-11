@@ -65,6 +65,7 @@ function TypeChip({ label, selected, color, onPress }: ChipProps) {
   return (
     <Animated.View style={animatedStyle}>
       <Pressable
+        testID={`type-chip-${label.toLowerCase()}`}
         style={[
           styles.chip,
           {
