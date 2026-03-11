@@ -59,6 +59,22 @@ class PokemonService {
     return ids;
   }
 
+  async getAbilityDetail(name: string): Promise<string> {
+    const cacheKey = `ability_${name}`;
+    const cached = storage.getString(cacheKey);
+    if (cached) return cached; // Return raw string
+
+    const { data } = await pokeApi.fetchAbility(name);
+    // Find first English flavor text, fallback to a default if missing
+    const flavorTextEntry = data.flavor_text_entries?.find((entry: any) => entry.language.name === 'en');
+    const desc = flavorTextEntry
+      ? flavorTextEntry.flavor_text.replace(/\s+/g, ' ').trim() // Clean up weird PokeAPI newlines
+      : 'No description available for this ability.';
+
+    storage.set(cacheKey, desc);
+    return desc;
+  }
+
   async getSpeciesChainId(pokemonId: number): Promise<number> {
     const { data } = await pokeApi.fetchSpecies(pokemonId);
     const chainUrl: string = data.evolution_chain.url;

@@ -5,27 +5,26 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Dimensions,
   ScrollView,
+  Image,
+  Platform,
 } from 'react-native';
 import Animated, {
-  FadeInDown,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
   useSharedValue,
-  interpolate,
-  Extrapolation,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  Easing,
 } from 'react-native-reanimated';
-import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  fetchPokemonDetail,
-  toggleFavorite,
-} from './pokemonSlice';
+import { fetchPokemonDetail, toggleFavorite } from './pokemonSlice';
 import { StatBar } from '@/components/StatBar';
 import { TypeBadge } from '@/components/TypeBadge';
+import { GlossarySheet } from '@/components/GlossarySheet';
+import { AbilityAccordion } from '@/components/AbilityAccordion';
 import { useTheme } from '@/hooks/useTheme';
 import {
   formatPokemonId,
@@ -34,11 +33,9 @@ import {
   formatWeight,
   getSpriteUrl,
 } from '@/utils/pokemonHelpers';
-import { getTypeColor } from '@/utils/typeColors';
+import { getTypeData } from '@/utils/typeColors';
 import type { PokedexStackParamList } from '@/navigation/PokedexNavigator';
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const HEADER_HEIGHT = 340;
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = NativeStackScreenProps<PokedexStackParamList, 'PokemonDetail'>;
 
@@ -46,7 +43,11 @@ export function PokemonDetailScreen({ route, navigation }: Props) {
   const { pokemonId } = route.params;
   const dispatch = useAppDispatch();
   const colors = useTheme();
-  const scrollY = useSharedValue(0);
+  const insets = useSafeAreaInsets();
+  const [isGlossaryVisible, setIsGlossaryVisible] = React.useState(false);
+
+  // Animation value for sprite floatiing
+  const floatAnim = useSharedValue(0);
 
   const pokemon = useAppSelector((state) => state.pokemon.pokemonDetails[pokemonId]);
   const detailLoading = useAppSelector((state) => state.pokemon.detailLoading);
@@ -58,39 +59,27 @@ export function PokemonDetailScreen({ route, navigation }: Props) {
     }
   }, [pokemonId, pokemon, dispatch]);
 
-  const handleFavorite = useCallback(
-    () => dispatch(toggleFavorite(pokemonId)),
-    [dispatch, pokemonId],
-  );
+  useEffect(() => {
+    floatAnim.value = withRepeat(
+      withSequence(
+        withTiming(-13, { duration: 1900, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 1900, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+  }, [floatAnim]);
 
-  const handleEvolution = useCallback(
-    () => navigation.navigate('Evolution', { pokemonId }),
-    [navigation, pokemonId],
-  );
+  const handleFavorite = useCallback(() => {
+    dispatch(toggleFavorite(pokemonId));
+  }, [dispatch, pokemonId]);
 
-  const onScroll = useAnimatedScrollHandler((event) => {
-    scrollY.value = event.contentOffset.y;
-  });
+  const handleEvolution = useCallback(() => {
+    navigation.navigate('Evolution', { pokemonId });
+  }, [navigation, pokemonId]);
 
-  const headerAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        translateY: interpolate(
-          scrollY.value,
-          [-HEADER_HEIGHT, 0, HEADER_HEIGHT],
-          [-HEADER_HEIGHT / 2, 0, HEADER_HEIGHT * 0.6],
-          Extrapolation.CLAMP,
-        ),
-      },
-      {
-        scale: interpolate(
-          scrollY.value,
-          [-HEADER_HEIGHT, 0],
-          [1.8, 1],
-          Extrapolation.EXTEND,
-        ),
-      },
-    ],
+  const animatedSpriteStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: floatAnim.value }],
   }));
 
   if (!pokemon || detailLoading) {
@@ -102,104 +91,87 @@ export function PokemonDetailScreen({ route, navigation }: Props) {
   }
 
   const primaryType = pokemon.types[0]?.type.name ?? 'normal';
-  const typeColor = getTypeColor(primaryType);
+  const typeData = getTypeData(primaryType);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Colored header background */}
-      <Animated.View style={[styles.headerBg, { backgroundColor: typeColor }, headerAnimatedStyle]}>
-        <Image
-          source={{ uri: getSpriteUrl(pokemon.id) }}
-          style={styles.sprite}
-          resizeMode="contain"
-        />
-      </Animated.View>
+      {/* STICKY HEADER ACTIONS */}
+      <View style={[styles.dTopbar, { top: Math.max(insets.top, 16) + (Platform.OS === 'android' ? 22 : 0) }]}>
+        <TouchableOpacity style={styles.dBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={20} color="rgba(255,255,255,0.85)" />
+        </TouchableOpacity>
+        <View style={styles.topRBtns}>
+          <TouchableOpacity style={styles.dBtn} onPress={() => setIsGlossaryVisible(true)}>
+            <Ionicons name="help" size={20} color="rgba(255,255,255,0.85)" />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.dBtn, isFavorite && styles.dBtnLit]} onPress={handleFavorite}>
+            <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={20} color={isFavorite ? "#fff" : "rgba(255,255,255,0.85)"} />
+          </TouchableOpacity>
+        </View>
+      </View>
 
-      <Animated.ScrollView
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: HEADER_HEIGHT - 48 }}
-      >
-        <Animated.View entering={FadeInDown.delay(80).springify().damping(16)}>
-          <View style={[styles.contentPanel, { backgroundColor: colors.surface }]}>
-            <View style={styles.dragHandle} />
+      <ScrollView style={styles.dScroll} showsVerticalScrollIndicator={false}>
+        {/* HERO BANNER */}
+        <View style={[styles.dHero, { backgroundColor: typeData.bg }]}>
+          <View style={styles.dHeroFade} />
 
-            {/* Title row */}
-            <View style={styles.titleRow}>
-              <View style={styles.titleLeft}>
-                <Text style={[styles.number, { color: colors.textSecondary }]}>
-                  {formatPokemonId(pokemon.id)}
-                </Text>
-                <Text style={[styles.name, { color: colors.text }]}>
-                  {formatPokemonName(pokemon.name)}
-                </Text>
-                <View style={styles.typesRow}>
-                  {pokemon.types.map((t) => (
-                    <TypeBadge key={t.type.name} type={t.type.name} />
-                  ))}
-                </View>
-              </View>
-              <TouchableOpacity
-                onPress={handleFavorite}
-                style={[
-                  styles.favBtn,
-                  { backgroundColor: isFavorite ? colors.favorite : colors.inputBg },
-                ]}
-                activeOpacity={0.8}
-              >
-                <Ionicons
-                  name={isFavorite ? 'star' : 'star-outline'}
-                  size={22}
-                  color={isFavorite ? '#1A1A1A' : colors.textMuted}
-                />
-              </TouchableOpacity>
+          <Animated.Image
+            source={{ uri: getSpriteUrl(pokemon.id) }}
+            style={[styles.dSprite, animatedSpriteStyle]}
+            resizeMode="contain"
+          />
+
+          <View style={styles.dHeroText}>
+            <Text style={styles.dNTag}>NO. {formatPokemonId(pokemon.id).replace('#', '')}</Text>
+            <Text style={styles.dPname}>{formatPokemonName(pokemon.name)}</Text>
+            <View style={styles.dTypesRow}>
+              {pokemon.types.map((t) => {
+                const td = getTypeData(t.type.name);
+                return (
+                  <View key={t.type.name} style={[styles.dTypePill, { backgroundColor: td.bg }]}>
+                    <Text style={[styles.dTypePillText, { color: td.c }]}>{t.type.name}</Text>
+                  </View>
+                );
+              })}
             </View>
+          </View>
+        </View>
 
-            {/* Quick stats */}
-            <View style={[styles.quickStats, { backgroundColor: colors.background }]}>
-              <View style={styles.statBox}>
-                <Text style={[styles.statValue, { color: colors.text }]}>
-                  {formatHeight(pokemon.height)}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Height</Text>
-              </View>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-              <View style={styles.statBox}>
-                <Text style={[styles.statValue, { color: colors.text }]}>
-                  {formatWeight(pokemon.weight)}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Weight</Text>
-              </View>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-              <View style={styles.statBox}>
-                <Text style={[styles.statValue, { color: colors.text }]}>
-                  {pokemon.base_experience ?? '—'}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Base EXP</Text>
-              </View>
+        {/* DETAIL BODY */}
+        <View style={styles.dBody}>
+
+          {/* VITALS */}
+          <View style={styles.vitals}>
+            <View style={styles.vital}>
+              <Text style={[styles.vitalVal, { color: colors.text }]}>{formatWeight(pokemon.weight).split(' ')[0]}</Text>
+              <Text style={styles.vitalKey}>KG</Text>
             </View>
-
-            {/* Abilities */}
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Abilities</Text>
-            <View style={styles.abilitiesRow}>
-              {pokemon.abilities.map((a) => (
-                <View
-                  key={a.ability.name}
-                  style={[styles.abilityChip, { backgroundColor: colors.inputBg }]}
-                >
-                  <Text style={[styles.abilityText, { color: colors.text }]}>
-                    {formatPokemonName(a.ability.name)}
-                  </Text>
-                  {a.is_hidden && (
-                    <Text style={[styles.hiddenTag, { color: colors.textMuted }]}> (Hidden)</Text>
-                  )}
-                </View>
-              ))}
+            <View style={styles.vitalLine} />
+            <View style={styles.vital}>
+              <Text style={[styles.vitalVal, { color: colors.text }]}>{formatHeight(pokemon.height).split(' ')[0]}</Text>
+              <Text style={styles.vitalKey}>M</Text>
             </View>
+          </View>
 
-            {/* Base stats */}
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Base Stats</Text>
+          {/* ABILITIES */}
+          <View style={styles.abWrap}>
+            <View style={styles.secHead}>
+              <Text style={styles.secTitle}>Abilities</Text>
+            </View>
+            {pokemon.abilities.map((a) => (
+              <AbilityAccordion
+                key={a.ability.name}
+                abilityName={a.ability.name}
+                isHidden={a.is_hidden}
+              />
+            ))}
+          </View>
+
+          {/* STATS */}
+          <View style={styles.statsWrap}>
+            <View style={styles.secHead}>
+              <Text style={styles.secTitle}>Base Stats</Text>
+            </View>
             <View style={styles.statsContainer}>
               {pokemon.stats.map((s) => (
                 <StatBar
@@ -210,21 +182,24 @@ export function PokemonDetailScreen({ route, navigation }: Props) {
                 />
               ))}
             </View>
-
-            {/* Evolution chain button */}
-            <TouchableOpacity
-              style={[styles.evoBtn, { backgroundColor: typeColor }]}
-              onPress={handleEvolution}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.evoBtnText}>View Evolution Chain</Text>
-              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
-            </TouchableOpacity>
-
-            <View style={styles.bottomSpacer} />
           </View>
-        </Animated.View>
-      </Animated.ScrollView>
+
+          {/* EVO BANNER */}
+          <TouchableOpacity
+            style={[styles.evoBanner, { backgroundColor: typeData.bg }]}
+            onPress={handleEvolution}
+            activeOpacity={0.8}
+          >
+            <View style={styles.evoBannerBg} />
+            <View style={styles.evoBannerBody}>
+              <Text style={[styles.evoBannerLabel, { color: typeData.c }]}>EVOLUTION PATH</Text>
+              <Text style={styles.evoBannerTitle}>View Evolution Chain</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+      <GlossarySheet visible={isGlossaryVisible} onClose={() => setIsGlossaryVisible(false)} />
     </View>
   );
 }
@@ -232,118 +207,173 @@ export function PokemonDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  headerBg: {
+  dScroll: { flex: 1 },
+
+  dHero: {
+    height: 380,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  dHeroFade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.15)', // Fallback texture gradient
+  },
+  dTopbar: {
     position: 'absolute',
-    top: 0,
     left: 0,
     right: 0,
-    height: HEADER_HEIGHT,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  sprite: {
-    width: 200,
-    height: 200,
-    marginBottom: 8,
-  },
-  contentPanel: {
-    borderTopLeftRadius: 36,
-    borderTopRightRadius: 36,
-    minHeight: SCREEN_HEIGHT - HEADER_HEIGHT + 48,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 16,
-  },
-  dragHandle: {
-    width: 40,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: '#E0E0E0',
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
+    paddingHorizontal: 18,
+    zIndex: 10,
   },
-  titleLeft: { flex: 1, paddingRight: 12 },
-  number: { fontSize: 14, fontWeight: '700', letterSpacing: 0.5, marginBottom: 2 },
-  name: { fontSize: 32, fontWeight: '800', letterSpacing: -1, lineHeight: 38, marginBottom: 10 },
-  typesRow: { flexDirection: 'row', gap: 8 },
-  favBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  quickStats: {
+  topRBtns: {
     flexDirection: 'row',
-    borderRadius: 20,
-    paddingVertical: 16,
-    marginBottom: 28,
-    alignItems: 'center',
+    gap: 8,
   },
-  statBox: { flex: 1, alignItems: 'center', gap: 4 },
-  divider: { width: 1, height: 36 },
-  statValue: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
-  statLabel: {
+  dBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dBtnLit: {
+    backgroundColor: 'rgba(229,56,59,0.55)',
+  },
+  dSprite: {
+    position: 'absolute',
+    right: 10,
+    bottom: 20,
+    width: 220,
+    height: 220,
+    zIndex: 2,
+  },
+  dHeroText: {
+    position: 'absolute',
+    bottom: 22,
+    left: 20,
+    zIndex: 3,
+  },
+  dNTag: {
+    fontFamily: 'Nunito_900Black',
+    fontSize: 10,
+    letterSpacing: 3,
+    color: 'rgba(255,255,255,0.35)',
+    marginBottom: 4,
+  },
+  dPname: {
+    fontFamily: 'BricolageGrotesque_800ExtraBold',
+    fontSize: 46,
+    lineHeight: 46,
+    color: '#fff',
+    textTransform: 'capitalize',
+    letterSpacing: -1.5,
+    marginBottom: 8,
+  },
+  dTypesRow: { flexDirection: 'row', gap: 6 },
+  dTypePill: {
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 7,
+  },
+  dTypePillText: {
+    fontFamily: 'Nunito_800ExtraBold',
     fontSize: 11,
-    textTransform: 'uppercase',
-    fontWeight: '600',
+    textTransform: 'capitalize',
     letterSpacing: 0.5,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-    marginBottom: 14,
+
+  dBody: {
+    paddingBottom: 110,
   },
-  abilitiesRow: {
+
+  vitals: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 28,
-  },
-  abilityChip: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    alignItems: 'center',
-  },
-  abilityText: { fontSize: 14, fontWeight: '600' },
-  hiddenTag: { fontSize: 12, fontWeight: '400' },
-  statsContainer: { marginBottom: 28 },
-  evoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
     paddingVertical: 16,
-    borderRadius: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.07)',
   },
-  evoBtnText: {
-    color: '#FFFFFF',
+  vital: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  vitalLine: {
+    width: 1,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    marginVertical: 4,
+  },
+  vitalVal: {
+    fontFamily: 'BricolageGrotesque_700Bold',
+    fontSize: 22,
+    lineHeight: 22,
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  vitalKey: {
+    fontFamily: 'Nunito_800ExtraBold',
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: 'rgba(240,235,227,0.28)',
+  },
+
+  secHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingBottom: 12,
+  },
+  secTitle: {
+    fontFamily: 'BricolageGrotesque_700Bold',
+    fontSize: 19,
+    color: '#F0EBE3',
+    letterSpacing: -0.4,
+  },
+
+  abWrap: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 12,
+    gap: 8,
+  },
+
+  statsWrap: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 24,
+  },
+  statsContainer: {
+    marginTop: 4,
+  },
+
+  evoBanner: {
+    marginHorizontal: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  evoBannerBg: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.15)', // Shadow tint
+  },
+  evoBannerBody: { zIndex: 1 },
+  evoBannerLabel: {
+    fontFamily: 'Nunito_800ExtraBold',
+    fontSize: 10,
+    letterSpacing: 2,
+    marginBottom: 4,
+  },
+  evoBannerTitle: {
+    fontFamily: 'BricolageGrotesque_700Bold',
     fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: -0.2,
+    color: '#fff',
+    letterSpacing: -0.3,
   },
-  bottomSpacer: { height: 60 },
 });

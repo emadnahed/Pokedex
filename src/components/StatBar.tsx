@@ -7,8 +7,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { useTheme } from '@/hooks/useTheme';
-import { getStatLabel, getStatMax } from '@/utils/pokemonHelpers';
-import { getTypeColor } from '@/utils/typeColors';
+import { getStatMax } from '@/utils/pokemonHelpers';
 
 interface Props {
   statName: string;
@@ -16,17 +15,26 @@ interface Props {
   primaryType: string;
 }
 
-function StatBarComponent({ statName, value, primaryType }: Props) {
+const STATS_UI: Record<string, { l: string, c: string }> = {
+  hp: { l: "HP", c: "#E05555" },
+  attack: { l: "ATK", c: "#E08830" },
+  defense: { l: "DEF", c: "#4499DD" },
+  "special-attack": { l: "Sp.A", c: "#9944CC" },
+  "special-defense": { l: "Sp.D", c: "#33AA66" },
+  speed: { l: "SPD", c: "#CC4477" },
+};
+
+function StatBarComponent({ statName, value }: Props) {
   const colors = useTheme();
   const progress = useSharedValue(0);
   const max = getStatMax(statName);
   const ratio = Math.min(value / max, 1);
-  const barColor = getTypeColor(primaryType);
+  const statConfig = STATS_UI[statName] ?? { l: statName.toUpperCase(), c: "#FFFFFF" };
 
   useEffect(() => {
     progress.value = withTiming(ratio, {
-      duration: 800,
-      easing: Easing.out(Easing.cubic),
+      duration: 1100,
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
     });
   }, [ratio, progress]);
 
@@ -35,15 +43,15 @@ function StatBarComponent({ statName, value, primaryType }: Props) {
   }));
 
   return (
-    <View style={styles.row}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>
-        {getStatLabel(statName)}
+    <View style={styles.statRow}>
+      <Text style={[styles.sLbl, { color: colors.textMuted }]}>
+        {statConfig.l}
       </Text>
-      <Text style={[styles.value, { color: colors.text }]}>
-        {String(value).padStart(3, ' ')}
+      <Text style={[styles.sNum, { color: colors.text }]}>
+        {value}
       </Text>
-      <View style={[styles.track, { backgroundColor: colors.statBar }]}>
-        <Animated.View style={[styles.fill, { backgroundColor: barColor }, animatedBarStyle]} />
+      <View style={styles.sTrack}>
+        <Animated.View style={[styles.sFill, { backgroundColor: statConfig.c }, animatedBarStyle]} />
       </View>
     </View>
   );
@@ -52,34 +60,37 @@ function StatBarComponent({ statName, value, primaryType }: Props) {
 export const StatBar = memo(StatBarComponent);
 
 const styles = StyleSheet.create({
-  row: {
+  statRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    gap: 12,
+    marginBottom: 14,
   },
-  label: {
-    width: 68,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.4,
+  sLbl: {
+    fontFamily: 'Nunito_800ExtraBold',
+    fontSize: 10.5,
     textTransform: 'uppercase',
+    letterSpacing: 1,
+    width: 48,
+    flexShrink: 0,
   },
-  value: {
-    width: 36,
-    fontSize: 14,
-    fontWeight: '700',
+  sNum: {
+    fontFamily: 'BricolageGrotesque_700Bold',
+    fontSize: 16,
+    width: 34,
     textAlign: 'right',
-    marginRight: 12,
-    fontVariant: ['tabular-nums'],
+    flexShrink: 0,
+    letterSpacing: -0.5,
   },
-  track: {
+  sTrack: {
     flex: 1,
-    height: 8,
-    borderRadius: 4,
+    height: 5,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 99,
     overflow: 'hidden',
   },
-  fill: {
+  sFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 99,
   },
 });

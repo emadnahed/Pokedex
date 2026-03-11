@@ -32,21 +32,17 @@ export function PokedexNavigator() {
       <Stack.Screen
         name="Pokedex"
         component={PokedexScreen}
-        options={{ title: 'Pokédex' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="PokemonDetail"
         component={PokemonDetailScreen}
-        options={{
-          title: '',
-          headerTransparent: true,
-          headerTintColor: '#FFFFFF',
-        }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Evolution"
         component={EvolutionScreen}
-        options={{ title: 'Evolution Chain' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

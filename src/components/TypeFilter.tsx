@@ -14,6 +14,9 @@ export const TypeFilter = memo(({ selectedType, onTypeSelect }: Props) => {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      snapToAlignment="start"
+      decelerationRate="fast"
+      snapToInterval={60}
       style={styles.scroll}
       contentContainerStyle={styles.container}
     >
@@ -64,7 +67,10 @@ function TypeChip({ label, selected, color, onPress }: ChipProps) {
       <Pressable
         style={[
           styles.chip,
-          { backgroundColor: selected ? color : colors.surface },
+          {
+            backgroundColor: selected ? color : colors.surface,
+            borderColor: selected ? 'transparent' : colors.border,
+          },
         ]}
         onPress={onPress}
         onPressIn={handlePressIn}
@@ -73,10 +79,10 @@ function TypeChip({ label, selected, color, onPress }: ChipProps) {
         <Text
           style={[
             styles.chipText,
-            { color: selected ? '#FFFFFF' : colors.textSecondary },
+            { color: selected ? '#FFFFFF' : colors.textMuted },
           ]}
         >
-          {label.toUpperCase()}
+          {label}
         </Text>
       </Pressable>
     </Animated.View>
@@ -84,27 +90,24 @@ function TypeChip({ label, selected, color, onPress }: ChipProps) {
 }
 
 const styles = StyleSheet.create({
-  scroll: { height: 66, flexShrink: 0 },
+  scroll: { flexShrink: 0 },
   container: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    gap: 10,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    gap: 7,
     flexDirection: 'row',
     alignItems: 'center',
   },
   chip: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1.5,
   },
   chipText: {
+    fontFamily: 'Nunito_800ExtraBold',
     fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.6,
+    letterSpacing: 0.2,
+    textTransform: 'capitalize',
   },
 });
