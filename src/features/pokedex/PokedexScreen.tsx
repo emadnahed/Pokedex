@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   FlatList,
@@ -33,6 +33,105 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 type Props = NativeStackScreenProps<PokedexStackParamList, 'Pokedex'>;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+// ── Spotlight header ─────────────────────────────────────────────────────────
+// Defined OUTSIDE PokedexScreen so its identity is stable across re-renders.
+// This prevents FlatList from unmounting/remounting the ListHeaderComponent on
+// every state update, which would replay the FadeInDown entering animation and
+// make the spotlight card unresponsive to taps during the spring overshoot.
+type SpotlightDetail = { types: Array<{ type: { name: string } }> } | null | undefined;
+
+type SpotlightHeaderProps = {
+  spotlightItem: PokemonListItem | undefined;
+  detail: SpotlightDetail;
+  displayCount: number;
+  showFavorites: boolean;
+  onPress: (id: number) => void;
+  onToggleFavorites: () => void;
+};
+
+const SpotlightHeader = React.memo(function SpotlightHeader({
+  spotlightItem,
+  detail,
+  displayCount,
+  showFavorites,
+  onPress,
+  onToggleFavorites,
+}: SpotlightHeaderProps) {
+  const mountId = useRef(0);
+  useEffect(() => {
+    mountId.current += 1;
+    const id = mountId.current;
+    console.log(`[SpotlightHeader] MOUNTED (#${id}) spotlightId=${spotlightItem?.id} displayCount=${displayCount}`);
+    return () => {
+      console.log(`[SpotlightHeader] UNMOUNTED (#${id})`);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  console.log(`[SpotlightHeader] RENDER spotlightId=${spotlightItem?.id} displayCount=${displayCount} showFav=${showFavorites}`);
+
+  const primaryType = detail?.types[0]?.type.name ?? 'normal';
+  const typeData = getTypeData(primaryType);
+
+  return (
+    <Animated.View style={styles.spotlightWrap} entering={FadeInDown.duration(600).springify()}>
+      {spotlightItem && (
+        <AnimatedPressable
+          testID="spotlight-card"
+          style={[styles.spotlight, { backgroundColor: typeData.bg }]}
+          onPress={() => onPress(spotlightItem.id)}
+        >
+          <View style={styles.spotlightFade} />
+          <Image
+            source={{ uri: getSpriteUrl(spotlightItem.id) }}
+            style={styles.spotlightSprite}
+            resizeMode="contain"
+          />
+          <View style={styles.spotlightInfo}>
+            <View style={styles.spTop}>
+              <Text style={styles.spEyebrow}>NO. {formatPokemonId(spotlightItem.id).replace('#', '')}</Text>
+              <Text style={styles.spName} numberOfLines={1} adjustsFontSizeToFit>
+                {formatPokemonName(spotlightItem.name)}
+              </Text>
+              {detail && (
+                <View style={styles.spTypeRow}>
+                  {detail.types.map((t) => (
+                    <View key={t.type.name} style={[styles.spType, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+                      <Text style={[styles.spTypeText, { color: '#FFFFFF' }]}>{t.type.name}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+            <View style={styles.spBottom}>
+              <View style={styles.spCta}>
+                <Ionicons name="flash" size={12} color="#1C1410" />
+                <Text style={styles.spCtaText}>Details</Text>
+              </View>
+            </View>
+          </View>
+        </AnimatedPressable>
+      )}
+      <View style={styles.secHead}>
+        <Text style={styles.secTitle}>Explore</Text>
+        <View style={styles.secRight}>
+          <Text style={styles.secCount}>{displayCount} Pokémon</Text>
+          <TouchableOpacity
+            testID="favorites-toggle"
+            style={[styles.favToggleBtn, showFavorites && styles.favToggleBtnActive]}
+            onPress={onToggleFavorites}
+          >
+            <Ionicons
+              name={showFavorites ? 'heart' : 'heart-outline'}
+              size={16}
+              color={showFavorites ? '#fff' : 'rgba(255,255,255,0.4)'}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Animated.View>
+  );
+});
 
 export function PokedexScreen({ navigation }: Props) {
   const dispatch = useAppDispatch();
@@ -94,79 +193,33 @@ export function PokedexScreen({ navigation }: Props) {
     ? filteredPokemon.filter(p => favorites.includes(p.id))
     : filteredPokemon;
 
-  const renderHeader = () => {
-    const spotlightItem = displayData[0];
-    const detail = spotlightItem ? details[spotlightItem.id] : null;
-    const primaryType = detail?.types[0]?.type.name ?? 'normal';
-    const typeData = getTypeData(primaryType);
+  const toggleFavorites = useCallback(() => setShowFavorites(v => !v), []);
 
-    return (
-      <Animated.View style={styles.spotlightWrap} entering={FadeInDown.duration(600).springify()}>
-        {spotlightItem && (
-          <AnimatedPressable
-            testID="spotlight-card"
-            style={[styles.spotlight, { backgroundColor: typeData.bg }]}
-            onPress={() => handlePress(spotlightItem.id)}
-          >
-            <View style={styles.spotlightFade} />
-            <Image
-              source={{ uri: getSpriteUrl(spotlightItem.id) }}
-              style={styles.spotlightSprite}
-              resizeMode="contain"
-            />
-            <View style={styles.spotlightInfo}>
-              <View style={styles.spTop}>
-                <Text style={styles.spEyebrow}>NO. {formatPokemonId(spotlightItem.id).replace('#', '')}</Text>
-                <Text style={styles.spName} numberOfLines={1} adjustsFontSizeToFit>
-                  {formatPokemonName(spotlightItem.name)}
-                </Text>
-                {detail && (
-                  <View style={styles.spTypeRow}>
-                    {detail.types.map((t) => {
-                      const td = getTypeData(t.type.name);
-                      return (
-                        <View key={t.type.name} style={[styles.spType, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
-                          <Text style={[styles.spTypeText, { color: '#FFFFFF' }]}>{t.type.name}</Text>
-                        </View>
-                      );
-                    })}
-                  </View>
-                )}
-              </View>
-              <View style={styles.spBottom}>
-                <View style={styles.spCta}>
-                  <Ionicons name="flash" size={12} color="#1C1410" />
-                  <Text style={styles.spCtaText}>Details</Text>
-                </View>
-              </View>
-            </View>
-          </AnimatedPressable>
-        )}
-        <View style={styles.secHead}>
-          <Text style={styles.secTitle}>Explore</Text>
-          <View style={styles.secRight}>
-            <Text style={styles.secCount}>{displayData.length} Pokémon</Text>
-            <TouchableOpacity
-              testID="favorites-toggle"
-              style={[styles.favToggleBtn, showFavorites && styles.favToggleBtnActive]}
-              onPress={() => setShowFavorites(!showFavorites)}
-            >
-              <Ionicons
-                name={showFavorites ? "heart" : "heart-outline"}
-                size={16}
-                color={showFavorites ? "#fff" : "rgba(255,255,255,0.4)"}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Animated.View>
-    );
-  };
+  const spotlightItem = displayData[0];
+  const spotlightDetail = spotlightItem ? details[spotlightItem.id] : null;
+
+  // useMemo stabilises the element reference so FlatList's ListHeaderComponent
+  // receives the same object when none of the spotlight props change (e.g. when
+  // an unrelated detail fetch updates pokemonDetails).  A new reference forces
+  // React Native's VirtualizedList to re-key/remount the header, which replays
+  // the FadeInDown.springify() entering animation and makes spotlight-card
+  // temporarily invisible due to spring overshoot above the viewport.
+  const listHeader = useMemo(() => (
+    <SpotlightHeader
+      spotlightItem={spotlightItem}
+      detail={spotlightDetail}
+      displayCount={displayData.length}
+      showFavorites={showFavorites}
+      onPress={handlePress}
+      onToggleFavorites={toggleFavorites}
+    />
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [spotlightItem, spotlightDetail, displayData.length, showFavorites, handlePress, toggleFavorites]);
 
   if (error && filteredPokemon.length === 0) {
     return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <Text style={[styles.errorText, { color: colors.error }]}>
+      <View testID="error-view" style={[styles.centered, { backgroundColor: colors.background }]}>
+        <Text testID="error-text" style={[styles.errorText, { color: colors.error }]}>
           Failed to load: {error}
         </Text>
       </View>
@@ -178,7 +231,7 @@ export function PokedexScreen({ navigation }: Props) {
       <View style={styles.homeHeader}>
         {showFavorites ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <TouchableOpacity onPress={() => setShowFavorites(false)}>
+            <TouchableOpacity testID="favorites-back" onPress={() => setShowFavorites(false)}>
               <Ionicons name="arrow-back" size={24} color="#F0EBE3" />
             </TouchableOpacity>
             <Text style={styles.wordmark} numberOfLines={1} adjustsFontSizeToFit>
@@ -204,7 +257,7 @@ export function PokedexScreen({ navigation }: Props) {
         <SkeletonLoader />
       ) : displayData.length === 0 ? (
         <View style={{ flex: 1 }}>
-          {renderHeader()}
+          {listHeader}
           <View style={styles.emptyState}>
             <Ionicons name="search-outline" size={48} color="rgba(255,255,255,0.1)" style={{ marginBottom: 16 }} />
             <Text style={styles.emptyText}>No Pokémon found matching your filters.</Text>
@@ -224,6 +277,7 @@ export function PokedexScreen({ navigation }: Props) {
         </View>
       ) : (
         <FlatList
+          testID="pokemon-list"
           data={displayData.slice(1)} // Skip the first item as it's the spotlight
           keyExtractor={keyExtractor}
           renderItem={renderItem}
@@ -238,7 +292,8 @@ export function PokedexScreen({ navigation }: Props) {
           contentContainerStyle={styles.list}
           refreshing={refreshing}
           onRefresh={handleRefresh}
-          ListHeaderComponent={renderHeader}
+          keyboardShouldPersistTaps="handled"
+          ListHeaderComponent={listHeader}
         />
       )}
     </View>

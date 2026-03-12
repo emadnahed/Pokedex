@@ -46,7 +46,7 @@ export function PokemonDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [isGlossaryVisible, setIsGlossaryVisible] = React.useState(false);
 
-  // Animation value for sprite floatiing
+  // Animation value for sprite floating
   const floatAnim = useSharedValue(0);
 
   const pokemon = useAppSelector((state) => state.pokemon.pokemonDetails[pokemonId]);
@@ -82,124 +82,133 @@ export function PokemonDetailScreen({ route, navigation }: Props) {
     transform: [{ translateY: floatAnim.value }],
   }));
 
-  if (!pokemon || detailLoading) {
-    return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  const primaryType = pokemon.types[0]?.type.name ?? 'normal';
+  const primaryType = pokemon?.types[0]?.type.name ?? 'normal';
   const typeData = getTypeData(primaryType);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* STICKY HEADER ACTIONS */}
+      {/* STICKY HEADER ACTIONS — always rendered so back-button is accessible during loading */}
       <View style={[styles.dTopbar, { top: Math.max(insets.top, 16) + (Platform.OS === 'android' ? 22 : 0) }]}>
-        <TouchableOpacity testID="back-button" style={styles.dBtn} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          testID="back-button"
+          style={styles.dBtn}
+          onPress={() => {
+            console.log('[back-button] pressed pokemonId=' + pokemonId + ' pokemon=' + (pokemon ? pokemon.id : 'null') + ' detailLoading=' + detailLoading);
+            navigation.goBack();
+          }}
+        >
           <Ionicons name="arrow-back" size={20} color="rgba(255,255,255,0.85)" />
         </TouchableOpacity>
-        <View style={styles.topRBtns}>
-          <TouchableOpacity testID="glossary-button" style={styles.dBtn} onPress={() => setIsGlossaryVisible(true)}>
-            <Ionicons name="help" size={20} color="rgba(255,255,255,0.85)" />
-          </TouchableOpacity>
-          <TouchableOpacity testID="favorite-button" style={[styles.dBtn, isFavorite && styles.dBtnLit]} onPress={handleFavorite}>
-            <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={20} color={isFavorite ? "#fff" : "rgba(255,255,255,0.85)"} />
-          </TouchableOpacity>
-        </View>
+        {!!pokemon && !detailLoading && (
+          <View style={styles.topRBtns}>
+            <TouchableOpacity testID="glossary-button" style={styles.dBtn} onPress={() => setIsGlossaryVisible(true)}>
+              <Ionicons name="help" size={20} color="rgba(255,255,255,0.85)" />
+            </TouchableOpacity>
+            <TouchableOpacity testID={isFavorite ? "favorite-button-active" : "favorite-button"} style={[styles.dBtn, isFavorite && styles.dBtnLit]} onPress={handleFavorite}>
+              <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={20} color={isFavorite ? "#fff" : "rgba(255,255,255,0.85)"} />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
-      <ScrollView style={styles.dScroll} showsVerticalScrollIndicator={false}>
-        {/* HERO BANNER */}
-        <View style={[styles.dHero, { backgroundColor: typeData.bg }]}>
-          <View style={styles.dHeroFade} />
-
-          <Animated.Image
-            source={{ uri: getSpriteUrl(pokemon.id) }}
-            style={[styles.dSprite, animatedSpriteStyle]}
-            resizeMode="contain"
-          />
-
-          <View style={styles.dHeroText}>
-            <Text style={styles.dNTag}>NO. {formatPokemonId(pokemon.id).replace('#', '')}</Text>
-            <Text style={styles.dPname}>{formatPokemonName(pokemon.name)}</Text>
-            <View style={styles.dTypesRow}>
-              {pokemon.types.map((t) => {
-                const td = getTypeData(t.type.name);
-                return (
-                  <View key={t.type.name} style={[styles.dTypePill, { backgroundColor: td.bg }]}>
-                    <Text style={[styles.dTypePillText, { color: td.c }]}>{t.type.name}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
+      {(!pokemon || detailLoading) ? (
+        <View style={[styles.centered, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
+      ) : (
+        <>
+          <ScrollView testID="detail-scroll" style={styles.dScroll} showsVerticalScrollIndicator={false}>
+            {/* HERO BANNER */}
+            <View style={[styles.dHero, { backgroundColor: typeData.bg }]}>
+              <View style={styles.dHeroFade} />
 
-        {/* DETAIL BODY */}
-        <View style={styles.dBody}>
-
-          {/* VITALS */}
-          <View style={styles.vitals}>
-            <View style={styles.vital}>
-              <Text style={[styles.vitalVal, { color: colors.text }]}>{formatWeight(pokemon.weight).split(' ')[0]}</Text>
-              <Text style={styles.vitalKey}>KG</Text>
-            </View>
-            <View style={styles.vitalLine} />
-            <View style={styles.vital}>
-              <Text style={[styles.vitalVal, { color: colors.text }]}>{formatHeight(pokemon.height).split(' ')[0]}</Text>
-              <Text style={styles.vitalKey}>M</Text>
-            </View>
-          </View>
-
-          {/* ABILITIES */}
-          <View style={styles.abWrap}>
-            <View style={styles.secHead}>
-              <Text style={styles.secTitle}>Abilities</Text>
-            </View>
-            {pokemon.abilities.map((a) => (
-              <AbilityAccordion
-                key={a.ability.name}
-                abilityName={a.ability.name}
-                isHidden={a.is_hidden}
+              <Animated.Image
+                source={{ uri: getSpriteUrl(pokemon.id) }}
+                style={[styles.dSprite, animatedSpriteStyle]}
+                resizeMode="contain"
               />
-            ))}
-          </View>
 
-          {/* STATS */}
-          <View style={styles.statsWrap}>
-            <View style={styles.secHead}>
-              <Text style={styles.secTitle}>Base Stats</Text>
+              <View style={styles.dHeroText}>
+                <Text style={styles.dNTag}>NO. {formatPokemonId(pokemon.id).replace('#', '')}</Text>
+                <Text style={styles.dPname}>{formatPokemonName(pokemon.name)}</Text>
+                <View style={styles.dTypesRow}>
+                  {pokemon.types.map((t) => {
+                    const td = getTypeData(t.type.name);
+                    return (
+                      <View key={t.type.name} style={[styles.dTypePill, { backgroundColor: td.bg }]}>
+                        <Text style={[styles.dTypePillText, { color: td.c }]}>{t.type.name}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
             </View>
-            <View style={styles.statsContainer}>
-              {pokemon.stats.map((s) => (
-                <StatBar
-                  key={s.stat.name}
-                  statName={s.stat.name}
-                  value={s.base_stat}
-                />
-              ))}
-            </View>
-          </View>
 
-          {/* EVO BANNER */}
-          <TouchableOpacity
-            testID="evolution-banner"
-            style={[styles.evoBanner, { backgroundColor: typeData.bg }]}
-            onPress={handleEvolution}
-            activeOpacity={0.8}
-          >
-            <View style={styles.evoBannerBg} />
-            <View style={styles.evoBannerBody}>
-              <Text style={[styles.evoBannerLabel, { color: typeData.c }]}>EVOLUTION PATH</Text>
-              <Text style={styles.evoBannerTitle}>View Evolution Chain</Text>
+            {/* DETAIL BODY */}
+            <View style={styles.dBody}>
+
+              {/* VITALS */}
+              <View style={styles.vitals}>
+                <View style={styles.vital}>
+                  <Text style={[styles.vitalVal, { color: colors.text }]}>{formatWeight(pokemon.weight).split(' ')[0]}</Text>
+                  <Text style={styles.vitalKey}>KG</Text>
+                </View>
+                <View style={styles.vitalLine} />
+                <View style={styles.vital}>
+                  <Text style={[styles.vitalVal, { color: colors.text }]}>{formatHeight(pokemon.height).split(' ')[0]}</Text>
+                  <Text style={styles.vitalKey}>M</Text>
+                </View>
+              </View>
+
+              {/* ABILITIES */}
+              <View style={styles.abWrap}>
+                <View style={styles.secHead}>
+                  <Text style={styles.secTitle}>Abilities</Text>
+                </View>
+                {pokemon.abilities.map((a) => (
+                  <AbilityAccordion
+                    key={a.ability.name}
+                    abilityName={a.ability.name}
+                    isHidden={a.is_hidden}
+                  />
+                ))}
+              </View>
+
+              {/* STATS */}
+              <View style={styles.statsWrap}>
+                <View style={styles.secHead}>
+                  <Text style={styles.secTitle}>Base Stats</Text>
+                </View>
+                <View style={styles.statsContainer}>
+                  {pokemon.stats.map((s) => (
+                    <StatBar
+                      key={s.stat.name}
+                      statName={s.stat.name}
+                      value={s.base_stat}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              {/* EVO BANNER */}
+              <TouchableOpacity
+                testID="evolution-banner"
+                style={[styles.evoBanner, { backgroundColor: typeData.bg }]}
+                onPress={handleEvolution}
+                activeOpacity={0.8}
+              >
+                <View style={styles.evoBannerBg} />
+                <View style={styles.evoBannerBody}>
+                  <Text style={[styles.evoBannerLabel, { color: typeData.c }]}>EVOLUTION PATH</Text>
+                  <Text style={styles.evoBannerTitle}>View Evolution Chain</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#fff" />
+              </TouchableOpacity>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-      <GlossarySheet visible={isGlossaryVisible} onClose={() => setIsGlossaryVisible(false)} />
+          </ScrollView>
+          <GlossarySheet visible={isGlossaryVisible} onClose={() => setIsGlossaryVisible(false)} />
+        </>
+      )}
     </View>
   );
 }

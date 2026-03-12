@@ -1,14 +1,18 @@
 import { device, element, by, waitFor, expect as detoxExpect } from 'detox';
 import { waitForListLoaded, searchFor, clearSearch, selectType } from '../helpers/pokedex';
-import { waitForAnimations } from '../setup';
 
 describe('Pokédex List Screen', () => {
   beforeAll(async () => {
     await device.launchApp({ newInstance: true });
+    await device.disableSynchronization();
     await waitForListLoaded(20000);
+    // Wait for the first grid card too — confirms the network burst has settled
+    // and the JS thread is idle enough to receive Detox actions reliably.
+    await waitFor(element(by.id('pokemon-card-2'))).toBeVisible().withTimeout(15000);
   });
 
   afterAll(async () => {
+    await device.enableSynchronization();
     await device.terminateApp();
   });
 
@@ -19,76 +23,69 @@ describe('Pokédex List Screen', () => {
   });
 
   it('renders at least one grid card', async () => {
-    // Bulbasaur (#1) is the spotlight; Ivysaur (#2) should be in the grid
     await detoxExpect(element(by.id('pokemon-card-2'))).toBeVisible();
   });
 
   // ── Search ───────────────────────────────────────────────────────────────────
 
-  it('filters by name: searching "bulbasaur" shows Bulbasaur card', async () => {
+  it('filters by name: searching "bulbasaur" shows Bulbasaur spotlight', async () => {
     await searchFor('bulbasaur');
-    await waitForAnimations();
-    // Bulbasaur is always the spotlight when it matches search
-    await detoxExpect(element(by.id('spotlight-card'))).toBeVisible();
+    await waitFor(element(by.id('spotlight-card'))).toBeVisible().withTimeout(8000);
   });
 
-  it('filters by name: Charmander is absent when searching "bulbasaur"', async () => {
-    // pokemon-card-4 is Charmander — should be filtered out
+  it('filters by name: Charmander (#4) is absent when searching "bulbasaur"', async () => {
     await detoxExpect(element(by.id('pokemon-card-4'))).not.toBeVisible();
   });
 
-  it('filters by Pokédex number: searching "25" shows Pikachu', async () => {
+  it('filters by Pokédex number: searching "25" shows a result', async () => {
     await clearSearch();
     await searchFor('25');
-    await waitForAnimations();
-    await waitFor(element(by.id('spotlight-card'))).toBeVisible().withTimeout(5000);
+    await waitFor(element(by.id('spotlight-card'))).toBeVisible().withTimeout(8000);
   });
 
   it('clearing search restores the full list', async () => {
     await clearSearch();
+    // waitForListLoaded confirms the full list is back (spotlight visible)
     await waitForListLoaded(10000);
-    await detoxExpect(element(by.id('spotlight-card'))).toBeVisible();
   });
 
   // ── Type Filter ──────────────────────────────────────────────────────────────
 
-  it('type filter: selecting Fire shows fire-type Pokémon', async () => {
+  it('selecting Fire type filter shows fire-type Pokémon', async () => {
     await selectType('fire');
-    await waitForAnimations(800);
-    // Charmander (#4) is fire — should appear in spotlight or grid
-    await waitFor(element(by.id('spotlight-card'))).toBeVisible().withTimeout(15000);
+    await waitForListLoaded(15000);
   });
 
-  it('type filter: Bulbasaur absent when Fire filter is active', async () => {
-    // Bulbasaur is Grass/Poison — should be filtered out
+  it('Bulbasaur (#1) is absent when Fire filter is active', async () => {
     await detoxExpect(element(by.id('pokemon-card-1'))).not.toBeVisible();
   });
 
-  it('type filter: selecting All restores full list', async () => {
+  it('selecting All restores full list', async () => {
     await selectType('all');
-    await waitForAnimations();
     await waitForListLoaded(10000);
+    await detoxExpect(element(by.id('pokemon-card-2'))).toBeVisible();
   });
 
-  it('combined filter: Fire type + search "char" returns only Charmander family', async () => {
+  it('combined Fire filter + search "char" returns results', async () => {
     await selectType('fire');
     await searchFor('char');
-    await waitForAnimations(800);
     await waitFor(element(by.id('spotlight-card'))).toBeVisible().withTimeout(10000);
     // Reset
     await clearSearch();
     await selectType('all');
+    await waitForListLoaded(10000);
   });
 
   // ── Favorites ────────────────────────────────────────────────────────────────
 
-  it('favorites toggle: empty state shows "No Pokémon found" before any favorites added', async () => {
+  it('favorites toggle: empty state shows no-results message', async () => {
     await element(by.id('favorites-toggle')).tap();
-    await waitForAnimations();
-    await detoxExpect(element(by.text('No Pokémon found matching your filters.'))).toBeVisible();
+    await waitFor(element(by.text('No Pokémon found matching your filters.')))
+      .toBeVisible()
+      .withTimeout(5000);
   });
 
-  it('favorites empty state: "Back to All" button returns to full list', async () => {
+  it('"Back to All" button restores the full list', async () => {
     await element(by.id('back-to-all-btn')).tap();
     await waitForListLoaded(5000);
   });

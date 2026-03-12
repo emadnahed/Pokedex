@@ -39,7 +39,10 @@ module.exports = {
   devices: {
     simulator: {
       type: 'ios.simulator',
-      device: { type: 'iPhone 16' },
+      // Pin to a single named simulator by UDID — prevents Detox from spawning
+      // additional simulators when the device is still booting between runs.
+      // UDID: iPhone 16-Detox (8E3CE2AE-87AA-42EC-851E-C2D01D820578)
+      device: { id: '8E3CE2AE-87AA-42EC-851E-C2D01D820578' },
     },
     emulator: {
       type: 'android.emulator',

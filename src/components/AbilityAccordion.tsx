@@ -75,6 +75,7 @@ export function AbilityAccordion({ abilityName, isHidden }: Props) {
     return (
         <View style={[styles.container, { backgroundColor: colors.surface, borderColor: expanded ? 'rgba(255,255,255,0.15)' : colors.border }]}>
             <TouchableOpacity
+                testID={`ability-row-${abilityName}`}
                 style={styles.header}
                 onPress={toggle}
                 activeOpacity={0.7}
@@ -91,11 +92,11 @@ export function AbilityAccordion({ abilityName, isHidden }: Props) {
             <Animated.View style={[styles.contentWrap, contentStyle]}>
                 <View ref={aRef} collapsable={false} style={styles.contentInner}>
                     {loading ? (
-                        <View style={styles.loaderWrap}>
+                        <View testID={`ability-loading-${abilityName}`} style={styles.loaderWrap}>
                             <ActivityIndicator size="small" color={colors.primary} />
                         </View>
                     ) : (
-                        <Text style={styles.descText}>{desc}</Text>
+                        <Text testID={`ability-desc-${abilityName}`} style={styles.descText}>{desc}</Text>
                     )}
                 </View>
             </Animated.View>

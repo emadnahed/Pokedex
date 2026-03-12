@@ -1,28 +1,53 @@
 import { element, by, waitFor } from 'detox';
-import { waitForVisible } from '../setup';
+import { waitForVisible, waitForAnimations } from '../setup';
 
-/** Navigate to a Pokemon's detail screen from the grid. */
 export async function navigateToDetail(pokemonId: number) {
   await waitForVisible(`pokemon-card-${pokemonId}`);
   await element(by.id(`pokemon-card-${pokemonId}`)).tap();
-  await waitForVisible('back-button');
+  await waitForVisible('back-button', 15000);
 }
 
-/** Navigate to the first Pokemon's detail screen via the spotlight card. */
 export async function navigateViaSpotlight() {
   await waitForVisible('spotlight-card', 20000);
+  // FadeInDown.springify() on the spotlight wrapper overshoots after toBeVisible() resolves.
+  // Wait for the spring to fully settle before tapping, otherwise the tap misses.
+  await waitForAnimations(1500);
   await element(by.id('spotlight-card')).tap();
-  await waitForVisible('back-button');
+  await waitForVisible('back-button', 15000);
+  // back-button is now always rendered (fix 1), so waitForVisible resolves as soon as the
+  // screen is pushed — potentially mid-animation.  Wait for the iOS push animation to
+  // fully complete before the caller taps glossary-button, favorite-button, etc.
+  // Without this, those taps fire during the native transition and are cancelled.
+  await waitForAnimations(800);
 }
 
-/** Go back from any screen that has a back-button. */
 export async function goBack() {
   await element(by.id('back-button')).tap();
 }
 
-/** Navigate to the evolution screen from the detail screen. */
+export async function goBackFromEvo() {
+  // EvolutionScreen uses 'evo-back-button' to avoid ambiguity when both
+  // the evo screen and the detail screen below it are mounted simultaneously.
+  await element(by.id('evo-back-button')).tap();
+}
+
 export async function openEvolution() {
-  await waitForVisible('evolution-banner');
+  // The evolution banner is below the fold — scroll down to reveal it.
+  // whileElement().scroll() uses y=95% start point which hits the iOS home indicator zone.
+  // Instead: explicit scroll(px, dir, 0.5, 0.5) with centre start point is safe.
+  // If we're already scrolled to the bottom the scroll throws — catch and proceed,
+  // the banner will be visible at the maximum scroll offset anyway.
+  await waitFor(element(by.id('detail-scroll'))).toExist().withTimeout(10000);
+  try {
+    await element(by.id('detail-scroll')).scroll(700, 'down', 0.5, 0.5);
+  } catch (_) {
+    // Already at maximum scroll offset — banner is in view
+  }
+  await waitForVisible('evolution-banner', 15000);
   await element(by.id('evolution-banner')).tap();
-  await waitForVisible('back-button', 20000);
+  await waitForVisible('evo-back-button', 20000);
+  // evo-back-button is always rendered (like back-button in PokemonDetailScreen), so
+  // waitForVisible resolves as soon as the screen is pushed — potentially mid-animation.
+  // Wait for the iOS push animation to fully settle before the caller taps evo-back-button.
+  await waitForAnimations(800);
 }

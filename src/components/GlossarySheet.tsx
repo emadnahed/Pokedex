@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-    Modal,
     View,
     Text,
     TouchableOpacity,
@@ -31,60 +30,60 @@ const GLOSSARY_TERMS = [
 export function GlossarySheet({ visible, onClose }: Props) {
     const insets = useSafeAreaInsets();
 
-    return (
-        <Modal
-            visible={visible}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={onClose}
-        >
-            <TouchableWithoutFeedback onPress={onClose}>
-                <View style={styles.backdrop}>
-                    <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-                        <View testID="glossary-sheet" style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
-                            {/* Header */}
-                            <View style={styles.header}>
-                                <View>
-                                    <Text style={styles.title}>Glossary</Text>
-                                    <Text style={styles.subtitle}>Terms & Abbreviations Guide</Text>
-                                </View>
-                                <TouchableOpacity testID="glossary-close" onPress={onClose} style={styles.closeBtn}>
-                                    <Ionicons name="close" size={24} color="#F0EBE3" />
-                                </TouchableOpacity>
-                            </View>
+    if (!visible) return null;
 
-                            <ScrollView
-                                showsVerticalScrollIndicator={false}
-                                contentContainerStyle={styles.scrollContent}
-                            >
-                                {GLOSSARY_TERMS.map((item, idx) => (
-                                    <View
-                                        key={item.key}
-                                        style={[
-                                            styles.termRow,
-                                            idx === GLOSSARY_TERMS.length - 1 && styles.lastTermRow,
-                                        ]}
-                                    >
-                                        <View style={styles.termKeyBadge}>
-                                            <Text style={styles.termKey}>{item.key}</Text>
-                                        </View>
-                                        <Text style={styles.termDesc}>{item.desc}</Text>
-                                    </View>
-                                ))}
-                            </ScrollView>
+    return (
+        // Absolute overlay — stays in the same UIWindow as the rest of the app,
+        // so Detox can find and interact with all child elements.
+        <TouchableWithoutFeedback onPress={onClose}>
+            <View style={styles.backdrop}>
+                <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+                    <View testID="glossary-sheet" style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <View>
+                                <Text style={styles.title}>Glossary</Text>
+                                <Text style={styles.subtitle}>Terms & Abbreviations Guide</Text>
+                            </View>
+                            <TouchableOpacity testID="glossary-close" onPress={onClose} style={styles.closeBtn}>
+                                <Ionicons name="close" size={24} color="#F0EBE3" />
+                            </TouchableOpacity>
                         </View>
-                    </TouchableWithoutFeedback>
-                </View>
-            </TouchableWithoutFeedback>
-        </Modal>
+
+                        <ScrollView
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={styles.scrollContent}
+                        >
+                            {GLOSSARY_TERMS.map((item, idx) => (
+                                <View
+                                    key={item.key}
+                                    style={[
+                                        styles.termRow,
+                                        idx === GLOSSARY_TERMS.length - 1 && styles.lastTermRow,
+                                    ]}
+                                >
+                                    <View style={styles.termKeyBadge}>
+                                        <Text style={styles.termKey}>{item.key}</Text>
+                                    </View>
+                                    <Text style={styles.termDesc}>{item.desc}</Text>
+                                </View>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </TouchableWithoutFeedback>
+            </View>
+        </TouchableWithoutFeedback>
     );
 }
 
 const styles = StyleSheet.create({
     backdrop: {
-        flex: 1,
+        ...StyleSheet.absoluteFillObject,
         backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'flex-end',
+        // Render above dTopbar (zIndex 10) and all other screen content
+        zIndex: 100,
+        elevation: 20,
     },
     sheet: {
         backgroundColor: '#1E1713', // Deep warm charcoal matching theme

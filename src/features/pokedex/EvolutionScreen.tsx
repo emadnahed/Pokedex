@@ -115,7 +115,7 @@ export function EvolutionScreen({ route, navigation }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: '#1C1410' }]}>
       <View style={[styles.topbar, { paddingTop: Math.max(insets.top, 16) + (Platform.OS === 'android' ? 12 : 0) }]}>
-        <TouchableOpacity testID="back-button" style={styles.backBtn} onPress={() => navigation.goBack()}>
+        <TouchableOpacity testID="evo-back-button" style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={20} color="#1C1410" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Evolution Chain</Text>
