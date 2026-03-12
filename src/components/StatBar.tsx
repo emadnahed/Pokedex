@@ -46,7 +46,7 @@ function StatBarComponent({ statName, value }: Props) {
       <Text style={[styles.sLbl, { color: colors.textMuted }]}>
         {statConfig.l}
       </Text>
-      <Text style={[styles.sNum, { color: colors.text }]}>
+      <Text testID={`stat-val-${statName}`} style={[styles.sNum, { color: colors.text }]}>
         {value}
       </Text>
       <View style={styles.sTrack}>

@@ -135,7 +135,7 @@ export function PokemonDetailScreen({ route, navigation }: Props) {
                   {pokemon.types.map((t) => {
                     const td = getTypeData(t.type.name);
                     return (
-                      <View key={t.type.name} style={[styles.dTypePill, { backgroundColor: td.bg }]}>
+                      <View key={t.type.name} testID={`type-badge-${t.type.name}`} style={[styles.dTypePill, { backgroundColor: td.bg }]}>
                         <Text style={[styles.dTypePillText, { color: td.c }]}>{t.type.name}</Text>
                       </View>
                     );
@@ -150,12 +150,12 @@ export function PokemonDetailScreen({ route, navigation }: Props) {
               {/* VITALS */}
               <View style={styles.vitals}>
                 <View style={styles.vital}>
-                  <Text style={[styles.vitalVal, { color: colors.text }]}>{formatWeight(pokemon.weight).split(' ')[0]}</Text>
+                  <Text testID="vital-weight" style={[styles.vitalVal, { color: colors.text }]}>{formatWeight(pokemon.weight).split(' ')[0]}</Text>
                   <Text style={styles.vitalKey}>KG</Text>
                 </View>
                 <View style={styles.vitalLine} />
                 <View style={styles.vital}>
-                  <Text style={[styles.vitalVal, { color: colors.text }]}>{formatHeight(pokemon.height).split(' ')[0]}</Text>
+                  <Text testID="vital-height" style={[styles.vitalVal, { color: colors.text }]}>{formatHeight(pokemon.height).split(' ')[0]}</Text>
                   <Text style={styles.vitalKey}>M</Text>
                 </View>
               </View>

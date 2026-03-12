@@ -41,4 +41,37 @@ describe('App Launch', () => {
     // Cached data — spotlight should appear well within 8 s
     await waitFor(element(by.id('spotlight-card'))).toBeVisible().withTimeout(8000);
   });
+
+  // ── Favorites MMKV persistence ────────────────────────────────────────────────
+
+  it('favorites survive an app relaunch (MMKV persistence)', async () => {
+    // The list is already loaded from the previous test.
+    // Navigate to Bulbasaur detail (spotlight) and favorite it.
+    await waitForListLoaded(10000);
+    await element(by.id('spotlight-card')).tap();
+    await waitFor(element(by.id('back-button'))).toBeVisible().withTimeout(10000);
+    await waitFor(element(by.id('favorite-button'))).toBeVisible().withTimeout(10000);
+    await element(by.id('favorite-button')).tap();
+    await waitFor(element(by.id('favorite-button-active'))).toBeVisible().withTimeout(5000);
+    await element(by.id('back-button')).tap();
+    await waitForListLoaded(10000);
+
+    // Relaunch without clearing storage — MMKV should preserve the favorites array.
+    await device.launchApp({ newInstance: true });
+    await device.disableSynchronization();
+    await waitForListLoaded(20000);
+
+    // Open favorites view — Bulbasaur should still be there.
+    await waitFor(element(by.id('favorites-toggle'))).toBeVisible().withTimeout(8000);
+    await element(by.id('favorites-toggle')).tap();
+    await waitFor(element(by.id('spotlight-card'))).toBeVisible().withTimeout(8000);
+
+    // Cleanup: navigate to Bulbasaur and remove from favorites.
+    await element(by.id('spotlight-card')).tap();
+    await waitFor(element(by.id('favorite-button-active'))).toBeVisible().withTimeout(10000);
+    await element(by.id('favorite-button-active')).tap();
+    await element(by.id('back-button')).tap();
+    await element(by.id('favorites-toggle')).tap();
+    await waitForListLoaded(8000);
+  });
 });

@@ -105,6 +105,33 @@ describe('Evolution Chain Screen', () => {
     await waitForAnimations(700);
     await waitForVisible('back-button', 10000);
     await goBack(); // Ditto's detail → list
-    // Last test — afterAll terminates the app; no state reset needed.
+    await waitForAnimations(700);
+    await clearSearch();
+    await waitForListLoaded(10000);
+  });
+
+  // ── Branching evolution (Eevee) ───────────────────────────────────────────────
+
+  it('Eevee evolution screen renders multiple branches in a single stage', async () => {
+    await searchFor('eevee');
+    await waitFor(element(by.id('spotlight-card'))).toBeVisible().withTimeout(8000);
+    await navigateViaSpotlight(); // Eevee (#133) detail
+    await openEvolution();
+
+    // Eevee has 8 possible evolutions in stage 1 — verify the first stage node
+    // and at least three branch nodes are rendered.
+    await waitFor(element(by.id('evo-node-133'))).toBeVisible().withTimeout(30000);
+    // Vaporeon, Jolteon, Flareon are the first three branches (IDs 134-136)
+    await waitFor(element(by.id('evo-node-134'))).toBeVisible().withTimeout(10000);
+    await waitFor(element(by.id('evo-node-135'))).toExist().withTimeout(5000);
+    await waitFor(element(by.id('evo-node-136'))).toExist().withTimeout(5000);
+
+    await goBackFromEvo();
+    await waitForAnimations(700);
+    await waitForVisible('back-button', 10000);
+    await goBack();
+    await waitForAnimations(700);
+    await clearSearch();
+    await waitForListLoaded(10000);
   });
 });
