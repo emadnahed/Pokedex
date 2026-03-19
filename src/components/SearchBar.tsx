@@ -27,22 +27,21 @@ export const SearchBar = memo(({ value, onChangeText }: Props) => {
   }, [focusAnim]);
 
   const animatedFocusStyle = useAnimatedStyle(() => ({
-    borderColor: colors.primary,
-    borderWidth: focusAnim.value * 1.5,
-    opacity: focusAnim.value * 0.4,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderWidth: focusAnim.value ? 1.5 : 0,
   }));
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.inputRow, { backgroundColor: colors.surface }]}>
+      <View style={styles.inputRow}>
         <Ionicons
           name="search"
           size={18}
-          color={isFocused ? colors.primary : colors.textMuted}
+          color={colors.textMuted}
           style={styles.icon}
         />
         <TextInput
-          style={[styles.input, { color: colors.text }]}
+          style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]}
           value={value}
           onChangeText={onChangeText}
           onFocus={handleFocus}
@@ -65,31 +64,32 @@ export const SearchBar = memo(({ value, onChangeText }: Props) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    flexShrink: 0,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 52,
-    borderRadius: 26,
-    paddingHorizontal: 18,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    position: 'relative',
   },
   focusRing: {
-    borderRadius: 26,
+    borderRadius: 12,
   },
   icon: {
-    marginRight: 10,
+    position: 'absolute',
+    left: 14,
+    zIndex: 2,
   },
   input: {
     flex: 1,
-    fontSize: 15,
-    letterSpacing: -0.2,
-    fontWeight: '500',
+    height: 44,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingLeft: 42,
+    paddingRight: 16,
+    fontFamily: 'Nunito_600SemiBold',
+    fontSize: 14,
   },
 });

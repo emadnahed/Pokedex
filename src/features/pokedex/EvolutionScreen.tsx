@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,8 +21,9 @@ import {
   getSpriteUrl,
   extractIdFromUrl,
 } from '@/utils/pokemonHelpers';
-import { getTypeColor } from '@/utils/typeColors';
+import { getTypeData } from '@/utils/typeColors';
 import type { PokedexStackParamList } from '@/navigation/PokedexNavigator';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = NativeStackScreenProps<PokedexStackParamList, 'Evolution'>;
 
@@ -68,6 +70,7 @@ export function EvolutionScreen({ route, navigation }: Props) {
   const { pokemonId } = route.params;
   const dispatch = useAppDispatch();
   const colors = useTheme();
+  const insets = useSafeAreaInsets();
 
   const evolutionLoading = useAppSelector((state) => state.pokemon.evolutionLoading);
   const chains = useAppSelector((state) => state.pokemon.evolutionChains);
@@ -99,114 +102,143 @@ export function EvolutionScreen({ route, navigation }: Props) {
 
   if (evolutionLoading || !chain) {
     return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.centered, { backgroundColor: '#1C1410' }]}>
+        <ActivityIndicator size="large" color="#F0EBE3" />
       </View>
     );
   }
 
   const stages = parseChainToStages(chain.chain);
   const primaryType = pokemon?.types[0]?.type.name ?? 'normal';
-  const accentColor = getTypeColor(primaryType);
+  const typeData = getTypeData(primaryType);
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {stages.map((stage, stageIdx) => (
-        <View key={stageIdx}>
-          {/* Arrow between stages */}
-          {stageIdx > 0 && (
-            <Animated.View
-              entering={FadeIn.delay(stageIdx * 100)}
-              style={styles.arrowRow}
-            >
-              <View style={[styles.arrowLine, { backgroundColor: colors.border }]} />
-              <View style={[styles.arrowHead, { borderTopColor: colors.border }]} />
-              <Text style={[styles.arrowLabel, { color: colors.textSecondary }]}>
-                {stage.nodes[0]?.trigger === 'level-up' && stage.nodes[0]?.minLevel
-                  ? `Lv. ${stage.nodes[0].minLevel}`
-                  : stage.nodes[0]?.item
-                  ? formatPokemonName(stage.nodes[0].item)
-                  : 'Evolves'}
-              </Text>
-            </Animated.View>
-          )}
+    <View style={[styles.container, { backgroundColor: '#1C1410' }]}>
+      <View style={[styles.topbar, { paddingTop: Math.max(insets.top, 16) + (Platform.OS === 'android' ? 12 : 0) }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={20} color="#1C1410" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Evolution Chain</Text>
+        <View style={{ width: 38 }} />
+      </View>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {stages.map((stage, stageIdx) => (
+          <View key={stageIdx}>
+            {/* Arrow between stages */}
+            {stageIdx > 0 && (
+              <Animated.View
+                entering={FadeIn.delay(stageIdx * 100)}
+                style={styles.arrowRow}
+              >
+                <View style={[styles.arrowLine, { backgroundColor: 'rgba(255,255,255,0.07)' }]} />
+                <View style={[styles.arrowHead, { borderTopColor: 'rgba(255,255,255,0.07)' }]} />
+                <Text style={[styles.arrowLabel, { color: 'rgba(255,255,255,0.28)' }]}>
+                  {stage.nodes[0]?.trigger === 'level-up' && stage.nodes[0]?.minLevel
+                    ? `Lv. ${stage.nodes[0].minLevel}`
+                    : stage.nodes[0]?.item
+                      ? formatPokemonName(stage.nodes[0].item)
+                      : 'Evolves'}
+                </Text>
+              </Animated.View>
+            )}
 
-          {/* Nodes in this stage (for branching evolutions) */}
-          <View style={styles.stageRow}>
-            {stage.nodes.map((node, nodeIdx) => {
-              const isCurrent = node.id === pokemonId;
-              const detail = pokemon?.types[0]?.type.name;
-              const nodeColor = isCurrent ? accentColor : colors.surface;
+            {/* Nodes in this stage (for branching evolutions) */}
+            <View style={styles.stageRow}>
+              {stage.nodes.map((node, nodeIdx) => {
+                const isCurrent = node.id === pokemonId;
+                const nodeColor = isCurrent ? typeData.bg : '#2A1F18';
 
-              return (
-                <Animated.View
-                  key={node.id}
-                  entering={FadeInDown.delay(stageIdx * 120 + nodeIdx * 60).springify()}
-                  style={styles.nodeWrapper}
-                >
-                  <TouchableOpacity
-                    style={[
-                      styles.nodeCard,
-                      {
-                        backgroundColor: nodeColor,
-                        borderColor: isCurrent ? accentColor : colors.border,
-                        borderWidth: isCurrent ? 2 : 1,
-                      },
-                    ]}
-                    onPress={() => handlePokemonPress(node.id)}
-                    activeOpacity={0.8}
-                    disabled={isCurrent}
+                return (
+                  <Animated.View
+                    key={node.id}
+                    entering={FadeInDown.delay(stageIdx * 120 + nodeIdx * 60).springify()}
+                    style={styles.nodeWrapper}
                   >
-                    <Image
-                      source={{ uri: getSpriteUrl(node.id) }}
-                      style={styles.nodeSprite}
-                      resizeMode="contain"
-                    />
-                    <Text
+                    <TouchableOpacity
                       style={[
-                        styles.nodeNumber,
-                        { color: isCurrent ? 'rgba(255,255,255,0.7)' : colors.textMuted },
+                        styles.nodeCard,
+                        {
+                          backgroundColor: nodeColor,
+                          borderColor: isCurrent ? 'transparent' : 'rgba(255,255,255,0.03)',
+                          borderWidth: 1,
+                        },
                       ]}
+                      onPress={() => handlePokemonPress(node.id)}
+                      activeOpacity={0.8}
+                      disabled={isCurrent}
                     >
-                      {formatPokemonId(node.id)}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.nodeName,
-                        { color: isCurrent ? '#FFFFFF' : colors.text },
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {formatPokemonName(node.name)}
-                    </Text>
-                  </TouchableOpacity>
-                  {!isCurrent && (
-                    <Ionicons
-                      name="arrow-forward-circle"
-                      size={22}
-                      color={colors.textMuted}
-                      style={styles.tapHint}
-                    />
-                  )}
-                </Animated.View>
-              );
-            })}
+                      {isCurrent && <View style={styles.nodeCardFade} />}
+                      <Image
+                        source={{ uri: getSpriteUrl(node.id) }}
+                        style={styles.nodeSprite}
+                        resizeMode="contain"
+                      />
+                      <View style={styles.nodeInfo}>
+                        <Text
+                          style={[
+                            styles.nodeNumber,
+                            { color: isCurrent ? 'rgba(255,255,255,0.5)' : 'rgba(240,235,227,0.28)' },
+                          ]}
+                        >
+                          {formatPokemonId(node.id)}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.nodeName,
+                            { color: isCurrent ? '#FFFFFF' : '#F0EBE3' },
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {formatPokemonName(node.name)}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  </Animated.View>
+                );
+              })}
+            </View>
           </View>
-        </View>
-      ))}
-      <View style={styles.bottomSpacer} />
-    </ScrollView>
+        ))}
+        <View style={styles.bottomSpacer} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: 24, paddingTop: 24 },
+  scroll: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  topbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: '#1C1410',
+    zIndex: 10,
+  },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#F0EBE3',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontFamily: 'BricolageGrotesque_700Bold',
+    fontSize: 18,
+    color: '#F0EBE3',
+    letterSpacing: -0.5,
+  },
+  content: { paddingHorizontal: 24, paddingTop: 32 },
   stageRow: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -217,45 +249,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   nodeCard: {
-    width: 130,
-    borderRadius: 20,
+    width: 140,
+    borderRadius: 22,
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 18,
     paddingHorizontal: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    overflow: 'hidden',
+  },
+  nodeCardFade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.15)',
   },
   nodeSprite: {
-    width: 90,
-    height: 90,
+    width: 95,
+    height: 95,
+    zIndex: 2,
+  },
+  nodeInfo: {
+    marginTop: 12,
+    alignItems: 'center',
+    zIndex: 2,
   },
   nodeNumber: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginTop: 4,
+    fontFamily: 'Nunito_800ExtraBold',
+    fontSize: 10,
+    letterSpacing: 1.5,
+    marginBottom: 4,
   },
   nodeName: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: -0.2,
+    fontFamily: 'BricolageGrotesque_600SemiBold',
+    fontSize: 16,
+    letterSpacing: -0.3,
     textAlign: 'center',
-    marginTop: 2,
-  },
-  tapHint: {
-    marginTop: 8,
   },
   arrowRow: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
     gap: 2,
   },
   arrowLine: {
     width: 2,
-    height: 20,
+    height: 24,
   },
   arrowHead: {
     width: 0,
@@ -267,10 +301,11 @@ const styles = StyleSheet.create({
     borderRightColor: 'transparent',
   },
   arrowLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 4,
-    letterSpacing: 0.3,
+    fontFamily: 'Nunito_800ExtraBold',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    marginTop: 6,
+    letterSpacing: 1,
   },
-  bottomSpacer: { height: 60 },
+  bottomSpacer: { height: 100 },
 });

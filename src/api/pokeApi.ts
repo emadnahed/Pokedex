@@ -19,4 +19,6 @@ export const pokeApi = {
     apiClient.get(`/evolution-chain/${id}`),
   fetchByType: (type: string) =>
     apiClient.get(`/type/${type}`),
+  fetchAbility: (name: string) =>
+    apiClient.get(`/ability/${name}`),
 };

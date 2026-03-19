@@ -89,9 +89,11 @@ interface PokemonState {
   pokemonDetails: Record<number, Pokemon>;
   evolutionChains: Record<number, EvolutionChain>;
   typeFilter: Record<string, number[]>;
+  abilityCache: Record<string, string>;
   loading: boolean;
   detailLoading: boolean;
   evolutionLoading: boolean;
+  abilityLoading: Record<string, boolean>;
   error: string | null;
   searchQuery: string;
   selectedType: string | null;
@@ -104,9 +106,11 @@ const initialState: PokemonState = {
   pokemonDetails: {},
   evolutionChains: {},
   typeFilter: {},
+  abilityCache: {},
   loading: false,
   detailLoading: false,
   evolutionLoading: false,
+  abilityLoading: {},
   error: null,
   searchQuery: '',
   selectedType: null,
@@ -184,6 +188,18 @@ export const fetchEvolutionForPokemon = createAsyncThunk(
       const chainId = await pokemonService.getSpeciesChainId(pokemonId);
       const chain = await pokemonService.getEvolutionChain(chainId);
       return chain;
+    } catch (err) {
+      return rejectWithValue((err as Error).message);
+    }
+  },
+);
+
+export const fetchAbilityDetail = createAsyncThunk(
+  'pokemon/fetchAbility',
+  async (name: string, { rejectWithValue }) => {
+    try {
+      const desc = await pokemonService.getAbilityDetail(name);
+      return { name, desc };
     } catch (err) {
       return rejectWithValue((err as Error).message);
     }
@@ -287,6 +303,17 @@ const pokemonSlice = createSlice({
       })
       .addCase(fetchEvolutionForPokemon.rejected, (state) => {
         state.evolutionLoading = false;
+      })
+      // fetchAbilityDetail
+      .addCase(fetchAbilityDetail.pending, (state, action) => {
+        state.abilityLoading[action.meta.arg] = true;
+      })
+      .addCase(fetchAbilityDetail.fulfilled, (state, action) => {
+        state.abilityLoading[action.payload.name] = false;
+        state.abilityCache[action.payload.name] = action.payload.desc;
+      })
+      .addCase(fetchAbilityDetail.rejected, (state, action) => {
+        state.abilityLoading[action.meta.arg] = false;
       })
       // toggleFavorite
       .addCase(toggleFavorite.fulfilled, (state, action) => {

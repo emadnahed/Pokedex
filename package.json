@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
+    "postinstall": "node scripts/patch-ios-unicode.js",
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
@@ -15,9 +16,9 @@
     "clean:ios": "rm -rf ios && rm -rf ~/Library/Developer/Xcode/DerivedData/*",
     "clean:android": "rm -rf android",
     "fresh-install": "npm run clean && npm install",
-    "setup:ios": "npm run clean:ios && npm install && npx expo prebuild --clean --platform ios",
+    "setup:ios": "npm run clean:ios && npm install && npx expo prebuild --clean --platform ios --no-install && cd ios && BUNDLE_GEMFILE=../Gemfile bundle install && BUNDLE_GEMFILE=../Gemfile bundle exec pod install --repo-update",
     "setup:ios:device": "npm run setup:ios && npx expo run:ios --device",
-    "setup:android": "npm run clean:android && npm install && npx expo prebuild --clean --platform android && cd android && ./gradlew clean && cd ..",
+    "setup:android": "npm run clean:android && npm install && npx expo prebuild --clean --platform android && rm -rf node_modules/react-native-mmkv/android/.cxx && cd android && ./gradlew clean && ./gradlew :react-native-nitro-modules:externalNativeBuildDebug -PreactNativeArchitectures=x86_64,arm64-v8a && cd ..",
     "setup:android:device": "npm run setup:android && npx expo run:android --device",
     "ios:prebuild": "npx expo prebuild --platform ios --clean",
     "ios:increment-build": "node scripts/increment-build.js ios",
@@ -29,8 +30,11 @@
     "@react-navigation/native": "^7.1.33",
     "@react-navigation/native-stack": "^7.14.4",
     "@reduxjs/toolkit": "^2.11.2",
+    "@expo-google-fonts/bricolage-grotesque": "^0.4.0",
+    "@expo-google-fonts/nunito": "^0.4.0",
     "axios": "^1.13.6",
     "expo": "~55.0.5",
+    "expo-font": "~13.0.1",
     "expo-status-bar": "~55.0.4",
     "expo-system-ui": "~55.0.9",
     "react": "19.2.4",
@@ -55,8 +59,16 @@
   },
   "jest": {
     "preset": "jest-expo",
+    "setupFiles": ["./jest.setup.js"],
+    "moduleNameMapper": {
+      "^react-native-mmkv$": "<rootDir>/__mocks__/react-native-mmkv.js",
+      "^react-native-reanimated$": "<rootDir>/__mocks__/react-native-reanimated.js",
+      "^react-native-reanimated/.*$": "<rootDir>/__mocks__/react-native-reanimated.js",
+      "^@expo/vector-icons$": "<rootDir>/__mocks__/@expo/vector-icons.js",
+      "^@expo/vector-icons/.*$": "<rootDir>/__mocks__/@expo/vector-icons.js"
+    },
     "transformIgnorePatterns": [
-      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*|react-native-mmkv|@reduxjs)"
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*|react-native-mmkv|@reduxjs|react-redux|immer)"
     ]
   }
 }
