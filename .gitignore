@@ -120,3 +120,14 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+
+# Build output
+/build/
+
+# Shell artifacts
+cat
+echo
+kill
+
+# macOS Spotlight
+--- SPOTLIGHT LOG ---
