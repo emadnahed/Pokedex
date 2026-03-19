@@ -17,6 +17,20 @@ The application consumes data from the **PokeAPI**, a comprehensive and free Pok
 
 ---
 
+### 🚀 Download the App
+
+
+<p align="center">
+  <a href="https://drive.google.com/file/d/1WeV1vE7owJOq5HDt7ElI04j6k0RHsvEK/view?usp=sharing">
+    <img src="https://img.shields.io/badge/Android-APK-3DDC84?logo=android&logoColor=white&style=for-the-badge" />
+  </a>
+  <a href="https://drive.google.com/file/d/1FgzImXzyrDMWl89Uh6N35T9IlpwtPagU/view?usp=sharing">
+    <img src="https://img.shields.io/badge/iOS-IPA-000000?logo=apple&logoColor=white&style=for-the-badge" />
+  </a>
+</p>
+
+---
+
 # 📱 Application Overview
 
 The Pokédex app allows users to:
@@ -32,6 +46,21 @@ The Pokédex app allows users to:
 * Use cached data for faster loading
 
 The project focuses on **UI polish, performance, and architecture**, mirroring real-world production mobile applications.
+
+---
+
+# 📸 Screenshots
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/611a67dd-b44a-4b53-8333-e516124d84ab" width="30%" />
+  <img src="https://github.com/user-attachments/assets/da403df4-219e-43ce-9be4-2a813696e440" width="30%" />
+  <img src="https://github.com/user-attachments/assets/4f824d28-a9bc-4650-87b9-d9e74a2afbba" width="30%" />
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9ed78d3c-d398-46bf-b1fa-05b602f3efd7" width="30%" />
+  <img src="https://github.com/user-attachments/assets/4624f0ac-2cbc-461b-a044-0f34c938af0c" width="30%" />
+</p>
 
 ---
 
